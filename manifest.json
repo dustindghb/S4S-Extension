@@ -1,0 +1,36 @@
+{
+  "name": "AI-Powered Video & Screen Analysis",
+  "description": "Record screens or upload videos and get AI analysis using OpenAI Vision API - extract frames and get detailed insights",
+  "version": "3.0",
+  "manifest_version": 3,
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "options_page": "options.html",
+  "permissions": [
+    "tabs", 
+    "activeTab", 
+    "desktopCapture", 
+    "downloads", 
+    "storage"
+  ],
+  "host_permissions": [
+    "https://api.openai.com/*",
+    "http://localhost:11434/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["recording_screen.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

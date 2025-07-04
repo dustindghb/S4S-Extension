@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>AI Video & Screen Analyzer</title>
+  <script src="popup.js"></script>
+  <style>
+    body {
+      width: 400px;
+      min-height: 500px;
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8f9fa;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      margin: 0 0 20px 0;
+      color: #333;
+      font-size: 20px;
+      text-align: center;
+    }
+    
+    .section {
+      margin-bottom: 25px;
+      padding: 15px;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      background: #f8f9fa;
+    }
+    
+    .section h2 {
+      margin: 0 0 15px 0;
+      color: #495057;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .primary-button {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .start-button {
+      background: #28a745;
+      color: white;
+    }
+    
+    .start-button:hover:not(:disabled) {
+      background: #218838;
+    }
+    
+    .stop-button {
+      background: #dc3545;
+      color: white;
+    }
+    
+    .stop-button:hover:not(:disabled) {
+      background: #c82333;
+    }
+    
+    .stop-button:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+    
+    .upload-section {
+      margin-top: 20px;
+    }
+    
+    .file-input-wrapper {
+      position: relative;
+      margin-bottom: 15px;
+    }
+    
+    .file-input {
+      width: 100%;
+      padding: 10px;
+      border: 2px dashed #dee2e6;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    
+    .file-input:hover {
+      border-color: #007bff;
+    }
+    
+    .file-input:focus {
+      outline: none;
+      border-color: #007bff;
+    }
+    
+    .analyze-button {
+      width: 100%;
+      padding: 12px 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .analyze-button:hover:not(:disabled) {
+      background: #0056b3;
+    }
+    
+    .analyze-button:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+    
+    .file-info {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      background: #e9ecef;
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    
+    .status {
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    
+    .status.recording {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+    
+    .status.processing {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    
+    .status-indicator.recording {
+      background: #dc3545;
+      animation: pulse 1s infinite;
+    }
+    
+    .status-indicator.processing {
+      background: #007bff;
+      animation: pulse 1s infinite;
+    }
+    
+    .status-indicator.ready {
+      background: #28a745;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    
+    .settings-section {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #e9ecef;
+    }
+    
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    
+    .setting-label {
+      font-weight: 500;
+      color: #495057;
+    }
+    
+    .setting-value {
+      color: #6c757d;
+      font-size: 12px;
+    }
+    
+    .feature-status {
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .feature-status.enabled {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .feature-status.disabled {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .options-button {
+      width: 100%;
+      padding: 10px 16px;
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .options-button:hover {
+      background: #5a6268;
+    }
+    
+    .analysis-button {
+      width: 100%;
+      padding: 10px 16px;
+      background: #17a2b8;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 10px;
+    }
+    
+    .analysis-button:hover {
+      background: #138496;
+    }
+    
+    .analysis-button:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>AI Video & Screen Analyzer</h1>
+    
+    <div id="status" class="status">
+      <span class="status-indicator ready"></span>Ready to record or analyze
+    </div>
+    
+    <!-- Screen Recording Section -->
+    <div class="section">
+      <h2>Screen Recording</h2>
+      <div class="button-group">
+        <button id="startRecordingButton" class="primary-button start-button">Start Recording</button>
+        <button id="stopRecordingButton" class="primary-button stop-button" disabled>Stop Recording</button>
+      </div>
+      <p style="margin: 0; font-size: 12px; color: #6c757d;">
+        Record your screen and get AI analysis of the content
+      </p>
+    </div>
+    
+    <!-- Video Upload Section -->
+    <div class="section upload-section">
+      <h2>Video Upload & Analysis</h2>
+      <div class="file-input-wrapper">
+        <input type="file" id="videoFile" class="file-input" accept="video/*">
+      </div>
+      
+      <div id="fileInfo" class="file-info">
+        <div id="fileName"></div>
+        <div id="fileSize"></div>
+        <div id="fileDuration"></div>
+      </div>
+      
+      <button id="analyzeButton" class="analyze-button" disabled>Analyze Video with AI</button>
+      
+      <button id="analysisButton" class="analysis-button" style="display: none;">View Last Analysis</button>
+    </div>
+    
+    <!-- Settings Section -->
+    <div class="settings-section">
+      <h2 style="margin: 0 0 15px 0; font-size: 16px; color: #495057;">Current Settings</h2>
+      
+      <div class="setting-item">
+        <span class="setting-label">Frame Rate:</span>
+        <span id="frameRateDisplay" class="setting-value">1 per 2s</span>
+      </div>
+      
+      <div class="setting-item">
+        <span class="setting-label">Auto-Analyze:</span>
+        <span id="autoAnalyzeDisplay" class="setting-value">Enabled</span>
+      </div>
+      
+      <div class="setting-item">
+        <span class="setting-label">AI Analysis:</span>
+        <span id="featureStatus" class="feature-status disabled">API Key Required</span>
+      </div>
+      
+      <button id="optionsButton" class="options-button">Settings & API Key</button>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

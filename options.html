@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AI Video & Screen Analyzer Extension Options</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+    
+    .section {
+      margin-bottom: 30px;
+    }
+    
+    .section h2 {
+      color: #555;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    input[type="text"], input[type="password"], select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    
+    input[type="password"] {
+      font-family: monospace;
+    }
+    
+    .help-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 10px;
+    }
+    
+    button:hover {
+      background-color: #45a049;
+    }
+    
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .test-button {
+      background-color: #2196F3;
+    }
+    
+    .test-button:hover {
+      background-color: #1976D2;
+    }
+    
+    .status {
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+      display: none;
+    }
+    
+    .status.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .status.info {
+      background-color: #cce7ff;
+      color: #004085;
+      border: 1px solid #b8daff;
+    }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      margin-right: 10px;
+    }
+    
+    .requirements {
+      background-color: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .requirements h3 {
+      margin-top: 0;
+      color: #856404;
+    }
+    
+    .requirements ul {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+    
+    .requirements li {
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>AI Video & Screen Analyzer Options</h1>
+    
+    <div class="requirements">
+      <h3>Requirements</h3>
+      <ul>
+        <li><strong>OpenAI API Key:</strong> Required for AI analysis (get one from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a>)</li>
+        <li><strong>Chrome Browser:</strong> Version 88 or later</li>
+        <li><strong>Video Analysis:</strong> Currently uses mock analysis (real FFmpeg integration requires server-side processing)</li>
+      </ul>
+    </div>
+    
+    <div class="section">
+      <h2>OpenAI Configuration</h2>
+      
+      <div class="form-group">
+        <label for="apiKey">OpenAI API Key:</label>
+        <input type="password" id="apiKey" placeholder="sk-...">
+        <div class="help-text">
+          Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a>. 
+          This is required for AI analysis of your recordings and videos.
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="analysisPrompt">Analysis Prompt:</label>
+        <textarea id="analysisPrompt" rows="8" placeholder="Describe what's happening in this sequence of video frames...">You are an expert web content analyst. Analyze this sequence of frames from a screen recording and provide a DETAILED description of what is happening. 
+
+IMPORTANT: Read and describe the ACTUAL CONTENT on the web pages, not just generic descriptions.
+
+For each frame, describe:
+1. The specific website/application being viewed
+2. The exact text content visible (headlines, paragraphs, buttons, forms, etc.)
+3. Any user interactions (clicks, typing, scrolling, etc.)
+4. The specific information being displayed (articles, data, images, etc.)
+5. Any errors, notifications, or important UI elements
+6. The chronological flow of actions and page changes
+
+Be specific about:
+- Website URLs or application names
+- Actual text content you can read
+- Specific data, numbers, or information displayed
+- User actions and their effects
+- Any forms being filled out or submitted
+- Navigation patterns and page transitions
+
+Provide a comprehensive, detailed analysis that captures the actual content and user workflow being demonstrated.</textarea>
+        <div class="help-text">
+          Customize the prompt sent to OpenAI for analyzing your video frames. The default prompt is designed to extract detailed content information.
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>Processing Settings</h2>
+      
+      <div class="form-group">
+        <label for="frameRate">Frame Extraction Rate:</label>
+        <select id="frameRate">
+          <option value="0.2">1 frame every 5 seconds</option>
+          <option value="0.5" selected>1 frame every 2 seconds</option>
+          <option value="1">1 frame per second</option>
+          <option value="2">2 frames per second</option>
+          <option value="5">5 frames per second</option>
+        </select>
+        <div class="help-text">
+          Higher rates provide more detail but use more API tokens and processing time.
+        </div>
+      </div>
+      
+      <div class="checkbox-group">
+        <input type="checkbox" id="autoAnalyze" checked>
+        <label for="autoAnalyze">Automatically analyze recordings and videos</label>
+      </div>
+      <div class="help-text">
+        When enabled, recordings and videos will be automatically analyzed after stopping/uploading. Disable to save API costs.
+      </div>
+      
+      <div class="checkbox-group">
+        <input type="checkbox" id="saveFrames">
+        <label for="saveFrames">Save extracted frames as images</label>
+      </div>
+      <div class="help-text">
+        Export individual frames as JPEG files along with the analysis.
+      </div>
+      
+      <div class="checkbox-group">
+        <input type="checkbox" id="cleanupTemp">
+        <label for="cleanupTemp">Automatically clean up temporary files</label>
+      </div>
+      <div class="help-text">
+        Remove temporary frame files after analysis to save disk space.
+      </div>
+      
+      <div class="checkbox-group">
+        <input type="checkbox" id="enableGrayscale" checked>
+        <label for="enableGrayscale">Convert frames to grayscale for efficiency</label>
+      </div>
+      <div class="help-text">
+        Convert frames to grayscale before analysis to reduce processing time and API costs. Vision models can still analyze content effectively in grayscale.
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <button id="saveButton">Save Settings</button>
+      <button id="testButton" class="test-button">Test OpenAI Connection</button>
+    </div>
+    
+    <div id="status" class="status"></div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
