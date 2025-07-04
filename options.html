@@ -154,14 +154,26 @@
 </head>
 <body>
   <div class="container">
-    <h1>AI Video & Screen Analyzer Options</h1>
+    <h1>AI LinkedIn & Video Analyzer Options</h1>
     
     <div class="requirements">
       <h3>Requirements</h3>
       <ul>
-        <li><strong>OpenAI API Key:</strong> Required for AI analysis (get one from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a>)</li>
+        <li><strong>OpenAI API Key:</strong> Configured in config.env file (see ENV_SETUP.md for instructions)</li>
         <li><strong>Chrome Browser:</strong> Version 88 or later</li>
-        <li><strong>Video Analysis:</strong> Currently uses mock analysis (real FFmpeg integration requires server-side processing)</li>
+        <li><strong>LinkedIn Access:</strong> Works best with LinkedIn feed and posts</li>
+        <li><strong>Auto-Scroll:</strong> Use Ctrl+Shift+S to start/stop auto-scrolling through LinkedIn feed</li>
+      </ul>
+    </div>
+    
+    <div class="requirements" style="background-color: #e3f2fd; border-color: #2196F3;">
+      <h3>🎯 LinkedIn Analysis Features</h3>
+      <ul>
+        <li><strong>Auto-Scroll:</strong> Automatically scroll through LinkedIn feed to capture more posts</li>
+        <li><strong>Author Extraction:</strong> Extract names, titles, and company information from posts</li>
+        <li><strong>Content Summaries:</strong> Get detailed summaries of each LinkedIn post</li>
+        <li><strong>Professional Insights:</strong> Analyze industry trends and professional content</li>
+        <li><strong>Keyboard Shortcuts:</strong> Ctrl+Shift+S (start/stop), Ctrl+Shift+P (pause/resume), Ctrl+Shift+H (hide/show panel)</li>
       </ul>
     </div>
     
@@ -169,39 +181,87 @@
       <h2>OpenAI Configuration</h2>
       
       <div class="form-group">
-        <label for="apiKey">OpenAI API Key:</label>
-        <input type="password" id="apiKey" placeholder="sk-...">
-        <div class="help-text">
-          Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a>. 
-          This is required for AI analysis of your recordings and videos.
-        </div>
-      </div>
-      
-      <div class="form-group">
         <label for="analysisPrompt">Analysis Prompt:</label>
-        <textarea id="analysisPrompt" rows="8" placeholder="Describe what's happening in this sequence of video frames...">You are an expert web content analyst. Analyze this sequence of frames from a screen recording and provide a DETAILED description of what is happening. 
+        <textarea id="analysisPrompt" rows="8" placeholder="Describe what's happening in this sequence of video frames...">You are an expert LinkedIn content analyst and data extractor. Your task is to analyze EACH FRAME individually and extract comprehensive information about LinkedIn posts visible in that specific frame.
 
-IMPORTANT: Read and describe the ACTUAL CONTENT on the web pages, not just generic descriptions.
+**CRITICAL MISSION:** Look for LinkedIn posts in each frame and extract the following information for EVERY post you can see:
 
-For each frame, describe:
-1. The specific website/application being viewed
-2. The exact text content visible (headlines, paragraphs, buttons, forms, etc.)
-3. Any user interactions (clicks, typing, scrolling, etc.)
-4. The specific information being displayed (articles, data, images, etc.)
-5. Any errors, notifications, or important UI elements
-6. The chronological flow of actions and page changes
+**FOR EACH LINKEDIN POST FOUND, EXTRACT:**
 
-Be specific about:
-- Website URLs or application names
-- Actual text content you can read
-- Specific data, numbers, or information displayed
-- User actions and their effects
-- Any forms being filled out or submitted
-- Navigation patterns and page transitions
+1. **POSTER INFORMATION:**
+   - **Full Name:** [Complete name of the person who posted]
+   - **Professional Title:** [Their job title/position]
+   - **Company:** [Company they work for]
+   - **Profile Picture:** [If visible, describe briefly]
 
-Provide a comprehensive, detailed analysis that captures the actual content and user workflow being demonstrated.</textarea>
+2. **POST CONTENT:**
+   - **Complete Text:** [Copy the ENTIRE text content of their post]
+   - **Post Summary:** [2-3 sentence summary of what they're posting about]
+   - **Main Topic:** [What specific subject/industry/topic are they discussing?]
+   - **Key Message:** [What's the main point or insight they're sharing?]
+
+3. **CONTENT TYPE & FORMAT:**
+   - **Post Type:** [Text post / Article / Video / Image / Shared post / Poll / etc.]
+   - **Media Attached:** [Any images, videos, documents, or links included]
+   - **Hashtags Used:** [List all hashtags they included]
+   - **Mentions:** [Any @mentions of other people or companies]
+
+4. **ENGAGEMENT METRICS:**
+   - **Likes:** [Number of likes if visible]
+   - **Comments:** [Number of comments if visible]
+   - **Shares:** [Number of shares if visible]
+   - **Reactions:** [Any other reactions (celebrate, support, etc.)]
+
+5. **PROFESSIONAL CONTEXT:**
+   - **Industry Focus:** [What industry is this post relevant to?]
+   - **Business Value:** [What business insights or value does this post provide?]
+   - **Target Audience:** [Who would find this post most relevant?]
+
+**OUTPUT FORMAT FOR EACH FRAME:**
+
+**FRAME [X]:**
+**LinkedIn Posts Detected: [Number]**
+
+**POST 1:**
+- **Poster:** [Full Name] - [Title] at [Company]
+- **Post Content:** [Complete text copied from the post]
+- **Summary:** [2-3 sentence summary]
+- **Topic:** [Specific subject being discussed]
+- **Content Type:** [Type of post]
+- **Engagement:** [Likes/Comments/Shares]
+- **Key Insights:** [Main business/professional insights]
+
+**POST 2:**
+[Repeat same detailed format]
+
+**POST 3:**
+[Continue for all posts in this frame]
+
+**Frame Summary:** [Brief overview of all posts found in this frame]
+
+**NEXT FRAME:**
+[Repeat the same detailed analysis for the next frame]
+
+**FINAL COMPREHENSIVE SUMMARY:**
+- **Total LinkedIn Posts Analyzed:** [Number]
+- **Most Active Posters:** [List of people who posted most frequently]
+- **Top Industries Discussed:** [Most common industry topics]
+- **Content Type Distribution:** [Breakdown of post types]
+- **Key Business Themes:** [Main professional/business topics]
+- **Engagement Patterns:** [Observations about likes/comments/shares]
+- **Professional Insights:** [Overall business/industry insights from all posts]
+
+**EXTRACTION REQUIREMENTS:**
+1. **READ EVERY WORD:** Copy the complete text from each LinkedIn post
+2. **IDENTIFY EVERY POSTER:** Get full names, titles, and companies
+3. **SUMMARIZE EACH POST:** Provide clear summaries of what each person is posting about
+4. **CAPTURE ALL DETAILS:** Include hashtags, mentions, engagement metrics
+5. **FOCUS ON BUSINESS VALUE:** Extract professional insights and industry relevance
+6. **BE THOROUGH:** Don't miss any posts visible in each frame
+
+**IMPORTANT:** This is for professional LinkedIn content analysis. Extract as much detailed information as possible from each post to understand the professional conversations and insights being shared.</textarea>
         <div class="help-text">
-          Customize the prompt sent to OpenAI for analyzing your video frames. The default prompt is designed to extract detailed content information.
+          Customize the prompt sent to OpenAI for analyzing your video frames. The default prompt is specifically designed to extract LinkedIn post authors, content summaries, and professional insights from your screen recordings.
         </div>
       </div>
     </div>
@@ -256,6 +316,10 @@ Provide a comprehensive, detailed analysis that captures the actual content and 
       </div>
     </div>
     
+    <div class="section">
+
+    </div>
+    
     <div class="form-group">
       <button id="saveButton">Save Settings</button>
       <button id="testButton" class="test-button">Test OpenAI Connection</button>
@@ -264,6 +328,7 @@ Provide a comprehensive, detailed analysis that captures the actual content and 
     <div id="status" class="status"></div>
   </div>
 
+  <script src="env-loader.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

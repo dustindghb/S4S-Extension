@@ -605,6 +605,8 @@ const formatAnalysisText = (text) => {
   return formatted;
 };
 
+
+
 // Listen for messages from the recording script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.name === 'endedRecording') {

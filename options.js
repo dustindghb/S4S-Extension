@@ -13,27 +13,15 @@ const showStatus = (message, type = 'info') => {
 };
 
 const saveOptions = async () => {
-  const apiKey = document.getElementById('apiKey').value.trim();
   const analysisPrompt = document.getElementById('analysisPrompt').value.trim();
   const frameRate = parseFloat(document.getElementById('frameRate').value);
   const autoAnalyze = document.getElementById('autoAnalyze').checked;
   const saveFrames = document.getElementById('saveFrames').checked;
   const cleanupTemp = document.getElementById('cleanupTemp').checked;
   const enableGrayscale = document.getElementById('enableGrayscale').checked;
-  
-  if (!apiKey) {
-    showStatus('Please enter your OpenAI API key', 'error');
-    return;
-  }
-  
-  if (!apiKey.startsWith('sk-')) {
-    showStatus('API key should start with "sk-"', 'error');
-    return;
-  }
-  
+
   try {
     await chrome.storage.local.set({
-      openaiApiKey: apiKey,
       analysisPrompt: analysisPrompt || 'Analyze this sequence of frames from a video recording and provide a detailed description of what is happening.',
       frameRate: frameRate,
       autoAnalyze: autoAnalyze,
@@ -58,10 +46,16 @@ const saveOptions = async () => {
 };
 
 const testApiConnection = async () => {
-  const apiKey = document.getElementById('apiKey').value.trim();
+  // Get API key from environment
+  let apiKey = '';
+  
+  // Try to get from environment loader if available
+  if (window.envLoader && window.envLoader.isLoaded()) {
+    apiKey = window.envLoader.getOpenAIKey();
+  }
   
   if (!apiKey) {
-    showStatus('Please enter your API key first', 'error');
+    showStatus('No OpenAI API key found. Please add your API key to the config.env file.', 'error');
     return;
   }
   
@@ -90,7 +84,7 @@ const testApiConnection = async () => {
         showStatus('⚠ OpenAI API key is valid but may not have access to GPT-4 Vision', 'info');
       }
     } else if (response.status === 401) {
-      showStatus('❌ Invalid OpenAI API key. Please check your key.', 'error');
+      showStatus('❌ Invalid OpenAI API key. Please check your key in config.env.', 'error');
     } else if (response.status === 429) {
       showStatus('⚠ Rate limit exceeded. OpenAI API key is valid but you\'ve hit usage limits.', 'info');
     } else {
@@ -108,7 +102,6 @@ const testApiConnection = async () => {
 const loadOptions = async () => {
   try {
     const result = await chrome.storage.local.get([
-      'openaiApiKey',
       'analysisPrompt', 
       'frameRate',
       'autoAnalyze',
@@ -118,10 +111,9 @@ const loadOptions = async () => {
     ]);
     
     // Load saved values or set defaults
-    document.getElementById('apiKey').value = result.openaiApiKey || '';
     document.getElementById('analysisPrompt').value = result.analysisPrompt || 
-      'Analyze this sequence of frames from a video recording and provide a detailed description of what is happening. Focus on user actions, UI changes, applications being used, and any workflows or processes being demonstrated.';
-    document.getElementById('frameRate').value = result.frameRate || 0.5;
+      'Extract the following information from this LinkedIn post:\n\n1. **Person\'s Name**: The full name of the person who wrote the post\n2. **Company**: The company or organization they work for\n3. **Post Content**: What is written in the post\n\nIf any information is not visible, write "Not visible". Keep the response concise and focused.';
+    document.getElementById('frameRate').value = result.frameRate || 1.0;
     document.getElementById('autoAnalyze').checked = result.autoAnalyze !== false; // Default true
     document.getElementById('saveFrames').checked = result.saveFrames || false;
     document.getElementById('cleanupTemp').checked = result.cleanupTemp !== false; // Default true
@@ -140,12 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('saveButton').addEventListener('click', saveOptions);
   document.getElementById('testButton').addEventListener('click', testApiConnection);
   
-  // Save on Enter key in API key field
-  document.getElementById('apiKey').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      saveOptions();
-    }
-  });
+
   
   // Auto-save certain settings
   document.getElementById('frameRate').addEventListener('change', saveOptions);
@@ -153,4 +140,5 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('saveFrames').addEventListener('change', saveOptions);
   document.getElementById('cleanupTemp').addEventListener('change', saveOptions);
   document.getElementById('enableGrayscale').addEventListener('change', saveOptions);
+
 });

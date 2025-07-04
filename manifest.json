@@ -1,5 +1,5 @@
 {
-  "name": "AI-Powered Video & Screen Analysis",
+  "name": "S4S Tool",
   "description": "Record screens or upload videos and get AI analysis using OpenAI Vision API - extract frames and get detailed insights",
   "version": "3.0",
   "manifest_version": 3,
@@ -12,7 +12,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "js": ["content.js", "auto_scroll.js"]
     }
   ],
   "options_page": "options.html",
@@ -29,7 +29,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["recording_screen.html"],
+      "resources": ["recording_screen.html", "config.env", "env-loader.js"],
       "matches": ["<all_urls>"]
     }
   ]

@@ -1,14 +1,24 @@
-# AI-Powered Video & Screen Analysis Chrome Extension
+# AI-Powered LinkedIn & Video Analysis Chrome Extension
 
-A Chrome extension that can record your screen or analyze uploaded videos using **OpenAI's Vision API** and **Ollama's Llama 3.2 Vision** to provide detailed insights about what's happening in the video. Compare cloud and local AI analysis for comprehensive results.
+A Chrome extension that can record your screen or analyze uploaded videos using **OpenAI's Vision API** and **Ollama's Llama 3.2 Vision** to provide detailed insights about what's happening in the video. **Specialized for LinkedIn analysis** with auto-scroll functionality to extract post authors, content summaries, and professional insights.
 
 ## Features
+
+### 🎯 LinkedIn Analysis (NEW!)
+- **Consistent auto-scroll functionality** with fixed scroll amounts and delays
+- **Author extraction**: Extract names, titles, and company information
+- **Content summaries**: Generate detailed summaries of each LinkedIn post
+- **Professional insights**: Analyze industry trends and professional content
+- **Keyboard shortcuts**: Ctrl+Shift+S (start/stop), Ctrl+Shift+P (pause/resume)
+- **Settings integration**: Configure scroll amount and delay in extension options
+- **Frame-by-frame analysis**: Analyze each frame individually for LinkedIn posts
 
 ### 🎬 Screen Recording
 - Record your entire screen or specific windows
 - Automatic frame extraction at configurable rates
 - **Dual AI analysis**: OpenAI GPT-4 Vision (cloud) + Ollama Llama 3.2 Vision (local)
 - **Grayscale processing** for improved efficiency
+- **LinkedIn-optimized prompts** for professional content analysis
 - Detailed content analysis including:
   - Website names and URLs
   - Visible text content
@@ -113,6 +123,22 @@ A Chrome extension that can record your screen or analyze uploaded videos using 
 
 ## Usage
 
+### LinkedIn Analysis (Recommended)
+1. **Navigate to LinkedIn** and open your feed
+2. **Start auto-scroll**: Press `Ctrl+Shift+S` or use the floating control panel
+3. **Adjust settings**: Use the control panel to set scroll speed and amount
+4. **Let it scroll**: The extension will automatically scroll through your feed
+5. **Start recording**: Click the extension icon and start screen recording
+6. **Stop when ready**: Stop both auto-scroll and recording when you have enough content
+7. **Get analysis**: View detailed analysis of LinkedIn posts with author names and summaries
+
+**Auto-scroll Controls:**
+- `Ctrl+Shift+S`: Start/Stop auto-scrolling
+- `Ctrl+Shift+P`: Pause/Resume auto-scrolling  
+- **Settings**: Configure scroll distance (200-800 px) in extension options
+- **Post-optimized scrolling**: Each scroll covers one complete LinkedIn post for optimal frame capture
+- **Frame-rate optimized**: 2-second scroll duration with 0.5-second pauses for perfect post capture
+
 ### Screen Recording
 1. Click the extension icon in your Chrome toolbar
 2. Click "Start Recording" to begin screen capture
@@ -129,7 +155,14 @@ A Chrome extension that can record your screen or analyze uploaded videos using 
 ### Viewing Analysis Results
 - Click "View Last Analysis" to see the most recent analysis
 - **Side-by-side comparison** of OpenAI and Ollama results
-- Analysis results include:
+- **LinkedIn-specific analysis** includes:
+  - **Author information**: Names, titles, and company details
+  - **Post summaries**: Detailed summaries of each LinkedIn post
+  - **Content categorization**: Article, video, text post, etc.
+  - **Engagement metrics**: Likes, comments, shares (if visible)
+  - **Professional insights**: Industry trends and business insights
+  - **Chronological order**: Posts analyzed in feed order
+- **General analysis** includes:
   - Frame-by-frame descriptions
   - Website identification
   - Text content details

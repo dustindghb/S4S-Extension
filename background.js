@@ -73,10 +73,18 @@ const stopRecording = async () => {
 
 // Listen for messages from popup.js
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('Background script received message:', request.name, 'from:', sender);
+  
   if (request.name === 'startRecording') {
+    console.log('Starting recording...');
     startRecording();
   } else if (request.name === 'stopRecording') {
+    console.log('Stopping recording...');
     stopRecording();
+  } else if (request.name === 'recordingProcessing') {
+    console.log('Recording is processing...');
+  } else if (request.name === 'recordingStopped') {
+    console.log('Recording stopped...');
   }
 });
 

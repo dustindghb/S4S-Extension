@@ -278,7 +278,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>AI Video & Screen Analyzer</h1>
+    <h1>AI LinkedIn & Video Analyzer</h1>
     
     <div id="status" class="status">
       <span class="status-indicator ready"></span>Ready to record or analyze
@@ -314,6 +314,28 @@
       <button id="analysisButton" class="analysis-button" style="display: none;">View Last Analysis</button>
     </div>
     
+    <!-- LinkedIn Analysis Section -->
+    <div class="section" style="background: #e3f2fd; border-color: #2196F3;">
+      <h2>🎯 LinkedIn Analysis</h2>
+      <p style="margin: 0 0 15px 0; font-size: 12px; color: #1976d2;">
+        <strong>Auto-Scroll:</strong> Use Ctrl+Shift+S to automatically scroll through LinkedIn feed and capture more posts for analysis.
+      </p>
+      <div style="font-size: 11px; color: #1976d2; line-height: 1.4;">
+        <strong>Features:</strong><br>
+        • Extract author names and professional titles<br>
+        • Generate detailed post summaries<br>
+        • Analyze industry trends and insights<br>
+        • Capture engagement metrics
+      </div>
+      
+      <div style="margin-top: 15px; padding: 10px; background: rgba(25, 118, 210, 0.1); border-radius: 6px;">
+        <div style="font-size: 12px; color: #1976d2; margin-bottom: 8px;">
+  
+        
+
+      </div>
+    </div>
+    
     <!-- Settings Section -->
     <div class="settings-section">
       <h2 style="margin: 0 0 15px 0; font-size: 16px; color: #495057;">Current Settings</h2>
@@ -333,10 +355,11 @@
         <span id="featureStatus" class="feature-status disabled">API Key Required</span>
       </div>
       
-      <button id="optionsButton" class="options-button">Settings & API Key</button>
+      <button id="optionsButton" class="options-button">Settings</button>
     </div>
   </div>
   
+  <script src="env-loader.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

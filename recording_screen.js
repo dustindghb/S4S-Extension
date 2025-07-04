@@ -25,6 +25,10 @@ const downloadBlob = (blob, filename) => {
 // Improved extractFrames: waits for video to be seekable, handles short/corrupt videos, logs more info
 const extractFrames = async (videoBlob, frameRate = 1) => {
   return new Promise((resolve, reject) => {
+    console.log('=== extractFrames started ===');
+    console.log('Video blob size:', videoBlob.size, 'bytes');
+    console.log('Frame rate:', frameRate);
+    
     if (!videoBlob || videoBlob.size === 0) {
       console.error('extractFrames: Video blob is empty!');
       reject(new Error('Video blob is empty'));
@@ -38,16 +42,15 @@ const extractFrames = async (videoBlob, frameRate = 1) => {
 
     video.muted = true;
     video.playsInline = true;
-
-    // Add more logging for debugging
-    video.addEventListener('canplay', () => console.log('Video canplay event fired'));
-    video.addEventListener('loadeddata', () => console.log('Video loadeddata event fired'));
+    video.crossOrigin = 'anonymous';
 
     let loadedMeta = false;
     let extractionTimedOut = false;
+    let extractionTimeout = null;
 
     const cleanup = () => {
       if (video.src) URL.revokeObjectURL(video.src);
+      if (extractionTimeout) clearTimeout(extractionTimeout);
       video.remove();
       canvas.remove();
     };
@@ -60,27 +63,36 @@ const extractFrames = async (videoBlob, frameRate = 1) => {
     };
 
     video.addEventListener('error', (e) => {
-      onError(new Error('Video failed to load (metadata error)'));
+      console.error('Video error event:', e);
+      onError(new Error('Video failed to load'));
     });
 
     video.addEventListener('loadedmetadata', async () => {
+      console.log('Video loadedmetadata event fired');
+      console.log('Video duration:', video.duration);
+      console.log('Video width:', video.videoWidth, 'height:', video.videoHeight);
+      
       loadedMeta = true;
+      
       try {
-        console.log('Video loadedmetadata event fired');
-        console.log('Video duration:', video.duration);
-        console.log('Video width:', video.videoWidth, 'height:', video.videoHeight);
-
-        if (!video.duration || video.duration === 0) {
-          throw new Error('Invalid video duration (0 or undefined)');
-        }
-        if (video.videoWidth === 0 || video.videoHeight === 0) {
+        // Validate video properties
+        if (!video.videoWidth || !video.videoHeight) {
           throw new Error('Invalid video dimensions');
+        }
+
+        // Handle infinite duration (common with WebM files)
+        let duration = video.duration;
+        if (!duration || !isFinite(duration) || duration <= 0) {
+          console.log('Invalid duration detected, using fallback duration');
+          // Estimate duration based on file size (rough approximation)
+          const estimatedDuration = Math.max(10, Math.min(300, videoBlob.size / 100000)); // 10-300 seconds
+          duration = estimatedDuration;
+          console.log('Using estimated duration:', duration, 'seconds');
         }
 
         canvas.width = Math.min(video.videoWidth, 1920);
         canvas.height = Math.min(video.videoHeight, 1080);
 
-        const duration = video.duration;
         const interval = 1 / frameRate;
         const totalFrames = Math.max(1, Math.floor(duration * frameRate));
 
@@ -111,10 +123,12 @@ const extractFrames = async (videoBlob, frameRate = 1) => {
                 clearTimeout(timeout);
                 try {
                   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                  const frameData = canvas.toDataURL('image/jpeg', 0.7);
+                  const frameData = canvas.toDataURL('image/jpeg', 0.6);
                   frames.push({ timestamp: currentTime, data: frameData });
+                  console.log(`Extracted frame ${i + 1}/${totalFrames} at ${currentTime.toFixed(2)}s`);
                   resolveFrame();
                 } catch (drawError) {
+                  console.error('Error drawing frame:', drawError);
                   rejectFrame(drawError);
                 }
               };
@@ -126,6 +140,7 @@ const extractFrames = async (videoBlob, frameRate = 1) => {
             await new Promise(r => setTimeout(r, 50));
           } catch (frameError) {
             console.warn(`Frame extraction failed at ${currentTime}s:`, frameError.message);
+            // Continue with next frame instead of failing completely
           }
         }
 
@@ -138,6 +153,7 @@ const extractFrames = async (videoBlob, frameRate = 1) => {
         resolve(frames);
 
       } catch (extractionError) {
+        console.error('Frame extraction failed:', extractionError);
         onError(extractionError);
       }
     });
@@ -145,18 +161,18 @@ const extractFrames = async (videoBlob, frameRate = 1) => {
     video.src = URL.createObjectURL(videoBlob);
     video.load();
 
-    // Timeout: If loadedmetadata never fires or no frames extracted
-    setTimeout(() => {
-      if (!loadedMeta || frames.length === 0) {
+    // Timeout: If loadedmetadata never fires
+    extractionTimeout = setTimeout(() => {
+      if (!loadedMeta) {
         extractionTimedOut = true;
-        onError(new Error('Frame extraction timeout - no frames extracted'));
+        onError(new Error('Video metadata loading timeout'));
       }
-    }, 30000);
+    }, 15000);
   });
 };
 
 // Enhanced analyze frames function with dual model support
-const analyzeFrames = async (frames, apiKey, prompt = "Describe what's happening in this sequence of screenshots from a screen recording.") => {
+const analyzeFrames = async (frames, apiKey, prompt = "You are an expert LinkedIn content analyst and data extractor. Your task is to analyze EACH FRAME individually and extract comprehensive information about LinkedIn posts visible in that specific frame.") => {
   try {
     console.log(`Starting analysis of ${frames.length} frames`);
     
@@ -183,6 +199,7 @@ const analyzeFrames = async (frames, apiKey, prompt = "Describe what's happening
     const framesToAnalyze = frames.filter((_, index) => index % frameStep === 0).slice(0, maxFrames);
     
     console.log(`Analyzing ${framesToAnalyze.length} frames (reduced from ${frames.length})`);
+    console.log('Analysis prompt being used:', analysisPrompt.substring(0, 200) + '...');
     
     // Process frames (convert to grayscale if enabled)
     const processedFrames = await processFramesForAnalysis(framesToAnalyze, enableGrayscale);
@@ -194,48 +211,66 @@ const analyzeFrames = async (frames, apiKey, prompt = "Describe what's happening
     // Define models array for use in storage
     const models = enableOllama ? ollamaModel.split(',').map(m => m.trim()).filter(m => m) : [];
     
-    // OpenAI analysis
+    // OpenAI analysis - individual frame analysis
     analysisPromises.push(
       (async () => {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: "gpt-4o",
-            messages: [
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "text",
-                    text: `${analysisPrompt}\n\nAnalyze this sequence of ${processedFrames.length} frames from a screen recording (selected from ${frames.length} total frames). Each frame is timestamped. Provide a comprehensive analysis of what's happening.`
-                  },
-                  ...processedFrames.map((frame, index) => ({
-                    type: "image_url",
-                    image_url: {
-                      url: `data:image/jpeg;base64,${frame.data}`,
-                      detail: "high"
+        const frameAnalyses = [];
+        
+        // Analyze each frame individually
+        for (let i = 0; i < processedFrames.length; i++) {
+          console.log(`Analyzing frame ${i + 1}/${processedFrames.length} with OpenAI...`);
+          
+          const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+              model: "gpt-4o",
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "text",
+                      text: `${analysisPrompt}\n\nExtract the following information from this LinkedIn post:\n\n1. **Person's Name**: The full name of the person who wrote the post\n2. **Company**: The company or organization they work for\n3. **Post Content**: What is written in the post\n\nIf any information is not visible, write "Not visible". Keep the response concise and focused.`
+                    },
+                    {
+                      type: "image_url",
+                      image_url: {
+                        url: `data:image/jpeg;base64,${processedFrames[i].data}`,
+                        detail: "high"
+                      }
                     }
-                  }))
-                ]
-              }
-            ],
-            max_tokens: 4000,
-            temperature: 0.7
-          })
-        });
+                  ]
+                }
+              ],
+              max_tokens: 1500,
+              temperature: 0.3
+            })
+          });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`OpenAI API error for frame ${i + 1}:`, errorText);
+            frameAnalyses.push(`**Frame ${i + 1} Analysis Error**: ${response.status} - ${errorText}`);
+            continue;
+          }
+
+          const result = await response.json();
+          const analysis = result.choices[0].message.content;
+          
+          frameAnalyses.push(`## Frame ${i + 1} Analysis (${processedFrames[i].timestamp.toFixed(1)}s)\n\n${analysis}\n\n---\n`);
+          
+          // Add a small delay between requests to avoid rate limiting
+          if (i < processedFrames.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
         }
-
-        const result = await response.json();
-        analysisResults.openai = result.choices[0].message.content;
-        console.log('OpenAI analysis completed');
+        
+        analysisResults.openai = frameAnalyses.join('\n');
+        console.log('OpenAI individual frame analysis completed');
       })()
     );
     
@@ -426,10 +461,13 @@ const stopRecording = () => {
 };
 
 const handleRecordingStop = async () => {
-  console.log('handleRecordingStop started');
+  console.log('=== handleRecordingStop started ===');
+  console.log('Chunks array length:', chunks.length);
+  console.log('MediaRecorder state:', mediaRecorder?.state);
   
   try {
     // Notify that we're processing
+    console.log('Sending recordingProcessing message...');
     chrome.runtime.sendMessage({ name: 'recordingProcessing' });
     
     const blobFile = new Blob(chunks, { type: "video/webm" });
@@ -440,29 +478,46 @@ const handleRecordingStop = async () => {
     }
 
     const now = new Date();
-    const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, -5);
-    const filename = `screen-recording-${timestamp}.webm`;
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const filename = `linkedin-recording-${year}-${month}-${day}-${hours}-${minutes}-${seconds}.webm`;
     
     // Download the original video file
     downloadBlob(blobFile, filename);
     console.log('Video file downloaded');
     
     // Get settings
+    console.log('Loading settings from storage...');
     const settings = await chrome.storage.local.get(['frameRate', 'autoAnalyze', 'openaiApiKey', 'saveFrames']);
     const frameRate = settings.frameRate || 0.5;
     const autoAnalyze = settings.autoAnalyze !== false;
     const saveFrames = settings.saveFrames || false;
     
-    console.log('Settings loaded:', { frameRate, autoAnalyze, hasApiKey: !!settings.openaiApiKey, saveFrames });
+    // Try to get API key from environment if not in storage
+    console.log('Checking for API key...');
+    let apiKey = settings.openaiApiKey;
+    if (!apiKey && window.envLoader && window.envLoader.isLoaded()) {
+      console.log('Loading API key from environment...');
+      apiKey = window.envLoader.getOpenAIKey();
+    }
+    
+    console.log('Settings loaded:', { frameRate, autoAnalyze, hasApiKey: !!apiKey, saveFrames });
     
     // Always try to extract frames for basic info
-    console.log('Starting frame extraction...');
+    console.log('=== Starting frame extraction ===');
+    console.log('Frame rate:', frameRate);
     let frames = [];
     try {
+      console.log('Calling extractFrames function...');
       frames = await extractFrames(blobFile, frameRate);
       console.log(`Frame extraction completed: ${frames.length} frames`);
     } catch (frameError) {
       console.error('Frame extraction failed:', frameError);
+      console.error('Frame error stack:', frameError.stack);
       frames = [];
     }
     
@@ -489,10 +544,18 @@ const handleRecordingStop = async () => {
       });
     }
     
-    if (settings.openaiApiKey && autoAnalyze && frames.length > 0) {
-      console.log('Starting dual analysis...');
-      const analysis = await analyzeFrames(frames, settings.openaiApiKey);
-      console.log('Analysis completed');
+    if (apiKey && autoAnalyze && frames.length > 0) {
+      console.log('=== Starting analysis ===');
+      console.log('API key available:', !!apiKey);
+      console.log('Auto-analyze enabled:', autoAnalyze);
+      console.log('Frames available:', frames.length);
+      try {
+        const analysis = await analyzeFrames(frames, apiKey, settings.analysisPrompt);
+        console.log('Analysis completed successfully');
+      } catch (analysisError) {
+        console.error('Analysis failed:', analysisError);
+        console.error('Analysis error stack:', analysisError.stack);
+      }
       
       // Create and download analysis report, store for popup
       const analysisData = await createAnalysisReport(analysis, frames, filename);
@@ -519,12 +582,12 @@ const handleRecordingStop = async () => {
         message: analysisMessage
       });
       
-    } else if (!settings.openaiApiKey) {
+    } else if (!apiKey) {
       console.log('No OpenAI API key found, skipping analysis');
       notifyContentScript(filename, {
         frameCount: frames.length,
         hasAnalysis: false,
-        message: 'Recording saved! Set OpenAI API key in extension options to enable AI analysis.'
+        message: 'Recording saved! Add OpenAI API key to config.env file or set it in extension options to enable AI analysis.'
       });
       
     } else if (!autoAnalyze) {
@@ -545,7 +608,9 @@ const handleRecordingStop = async () => {
     }
     
   } catch (error) {
-    console.error('Error during processing:', error);
+    console.error('=== Error during processing ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
     
     // Send error info to content script
     notifyContentScript('recording.webm', {
@@ -556,6 +621,7 @@ const handleRecordingStop = async () => {
   }
 
   // Cleanup and finalize
+  console.log('=== Starting finalization ===');
   await finalizeRecording();
 };
 
@@ -573,26 +639,39 @@ const notifyContentScript = (filename, data) => {
 };
 
 const finalizeRecording = async () => {
-  console.log('Finalizing recording...');
+  console.log('=== finalizeRecording started ===');
   
-  // Notify popup that recording stopped
-  chrome.runtime.sendMessage({ name: 'recordingStopped' });
+  try {
+    // Notify popup that recording stopped
+    console.log('Sending recordingStopped message...');
+    chrome.runtime.sendMessage({ name: 'recordingStopped' });
 
-  // Stop all tracks of stream
-  if (stream) {
-    stream.getTracks().forEach(track => track.stop());
+    // Stop all tracks of stream
+    console.log('Stopping media stream tracks...');
+    if (stream) {
+      stream.getTracks().forEach(track => {
+        console.log('Stopping track:', track.kind, track.id);
+        track.stop();
+      });
+    }
+    
+    // Clear the stored recording tab ID and processing state
+    console.log('Clearing storage...');
+    await chrome.storage.local.remove(['recordingTabId']);
+    await chrome.storage.local.set({ isProcessing: false });
+    
+    console.log('=== Recording finalized successfully ===');
+    console.log('Closing tab in 2 seconds...');
+    
+    // Close the recording tab after a short delay
+    setTimeout(() => {
+      console.log('Closing recording tab...');
+      window.close();
+    }, 2000);
+  } catch (error) {
+    console.error('Error in finalizeRecording:', error);
+    console.error('Error stack:', error.stack);
   }
-  
-  // Clear the stored recording tab ID and processing state
-  await chrome.storage.local.remove(['recordingTabId']);
-  await chrome.storage.local.set({ isProcessing: false });
-  
-  console.log('Recording finalized, closing tab in 2 seconds...');
-  
-  // Close the recording tab after a short delay
-  setTimeout(() => {
-    window.close();
-  }, 2000);
 };
 
 // Enhanced recording_screen.js with Ollama integration and grayscale support
