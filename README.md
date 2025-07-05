@@ -12,6 +12,7 @@ A Chrome extension that can record your screen or analyze uploaded videos using 
 - **Keyboard shortcuts**: Ctrl+Shift+S (start/stop), Ctrl+Shift+P (pause/resume)
 - **Settings integration**: Configure scroll amount and delay in extension options
 - **Frame-by-frame analysis**: Analyze each frame individually for LinkedIn posts
+- **Viewport Capture**: NEW! Capture multiple viewports and stitch into one comprehensive image for single API analysis
 
 ### 🎬 Screen Recording
 - Record your entire screen or specific windows
@@ -124,6 +125,8 @@ A Chrome extension that can record your screen or analyze uploaded videos using 
 ## Usage
 
 ### LinkedIn Analysis (Recommended)
+
+#### Method 1: Auto-Scroll + Screen Recording
 1. **Navigate to LinkedIn** and open your feed
 2. **Start auto-scroll**: Press `Ctrl+Shift+S` or use the floating control panel
 3. **Adjust settings**: Use the control panel to set scroll speed and amount
@@ -138,6 +141,24 @@ A Chrome extension that can record your screen or analyze uploaded videos using 
 - **Settings**: Configure scroll distance (200-800 px) in extension options
 - **Post-optimized scrolling**: Each scroll covers one complete LinkedIn post for optimal frame capture
 - **Frame-rate optimized**: 2-second scroll duration with 0.5-second pauses for perfect post capture
+
+#### Method 2: Viewport Capture (NEW!)
+1. **Navigate to LinkedIn** and open your feed
+2. **Click extension icon** in your Chrome toolbar
+3. **Click "📸 Capture & Analyze Feed"** button
+4. **Wait for capture**: The extension will automatically:
+   - Capture multiple viewports of your feed
+   - Stitch them together into one comprehensive image
+   - Remove duplicate content between viewports
+   - Analyze the complete image with OpenAI Vision API
+5. **View results**: Get instant analysis of all visible posts in your feed
+
+**Viewport Capture Benefits:**
+- **Single API call**: More efficient than frame-by-frame analysis
+- **Complete coverage**: Captures up to 5000px of feed content
+- **Smart stitching**: Automatically removes overlapping content
+- **Instant results**: No need to wait for scrolling or recording
+- **Cost effective**: Reduces API usage compared to multiple frame analysis
 
 ### Screen Recording
 1. Click the extension icon in your Chrome toolbar

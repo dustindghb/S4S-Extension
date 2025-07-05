@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>AI Video & Screen Analyzer</title>
-  <script src="popup.js"></script>
   <style>
     body {
       width: 400px;
@@ -274,6 +273,24 @@
       background: #6c757d;
       cursor: not-allowed;
     }
+    
+    /* Viewport Capture Button Styles */
+    #captureFeedButton:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+    }
+    
+    #captureFeedButton:active {
+      transform: translateY(0);
+    }
+    
+    #captureFeedButton:disabled {
+      background: #e0e0e0 !important;
+      color: #9e9e9e !important;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
   </style>
 </head>
 <body>
@@ -317,8 +334,32 @@
     <!-- LinkedIn Analysis Section -->
     <div class="section" style="background: #e3f2fd; border-color: #2196F3;">
       <h2>🎯 LinkedIn Analysis</h2>
+      
+      <!-- Viewport Capture Button - Prominent Position -->
+      <div style="margin-bottom: 15px; padding: 12px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border-radius: 8px; box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);">
+        <div style="font-size: 13px; color: white; margin-bottom: 10px; font-weight: 500;">
+          🆕 <strong>Quick Feed Analysis</strong>
+        </div>
+        <button id="captureFeedButton" class="primary-button" style="background: white; color: #2196F3; font-weight: 600; padding: 12px 20px; font-size: 14px; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; width: 100%;">
+          📸 Capture & Analyze LinkedIn Feed
+        </button>
+      </div>
+      
+      <!-- Test Viewport Scroll Capture Button -->
+      <div style="margin-bottom: 15px; padding: 12px; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); border-radius: 8px; box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);">
+        <div style="font-size: 13px; color: white; margin-bottom: 10px; font-weight: 500;">
+          🧪 <strong>Test New Method</strong>
+        </div>
+        <button id="testViewportScrollButton" class="primary-button" style="background: white; color: #FF9800; font-weight: 600; padding: 10px 16px; font-size: 13px; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; width: 100%;">
+          🔄 Test Viewport Scroll Capture
+        </button>
+        <button id="stopViewportScrollButton" class="primary-button" style="background: #dc3545; color: white; font-weight: 600; padding: 10px 16px; font-size: 13px; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; width: 100%; margin-top: 8px;">
+          ⏹️ Stop Capture
+        </button>
+      </div>
+      
       <p style="margin: 0 0 15px 0; font-size: 12px; color: #1976d2;">
-        <strong>Auto-Scroll:</strong> Use Ctrl+Shift+S to automatically scroll through LinkedIn feed and capture more posts for analysis.
+        <strong>Auto-Scroll Method:</strong> Use Ctrl+Shift+S to automatically scroll through LinkedIn feed and capture more posts for analysis.
       </p>
       <div style="font-size: 11px; color: #1976d2; line-height: 1.4;">
         <strong>Features:</strong><br>
@@ -326,13 +367,6 @@
         • Generate detailed post summaries<br>
         • Analyze industry trends and insights<br>
         • Capture engagement metrics
-      </div>
-      
-      <div style="margin-top: 15px; padding: 10px; background: rgba(25, 118, 210, 0.1); border-radius: 6px;">
-        <div style="font-size: 12px; color: #1976d2; margin-bottom: 8px;">
-  
-        
-
       </div>
     </div>
     

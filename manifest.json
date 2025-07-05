@@ -11,8 +11,9 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js", "auto_scroll.js"]
+      "matches": ["https://www.linkedin.com/*", "https://linkedin.com/*"],
+      "js": ["html2canvas.min.js", "linkedin_selectors.js", "viewport_capture.js", "auto_scroll.js", "content.js"],
+      "run_at": "document_idle"
     }
   ],
   "options_page": "options.html",
@@ -21,7 +22,8 @@
     "activeTab", 
     "desktopCapture", 
     "downloads", 
-    "storage"
+    "storage",
+    "scripting"
   ],
   "host_permissions": [
     "https://api.openai.com/*",
@@ -29,7 +31,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["recording_screen.html", "config.env", "env-loader.js"],
+      "resources": ["recording_screen.html", "config.env", "env-loader.js", "viewport_capture.js", "html2canvas.min.js"],
       "matches": ["<all_urls>"]
     }
   ]

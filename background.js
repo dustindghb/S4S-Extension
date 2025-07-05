@@ -71,7 +71,7 @@ const stopRecording = async () => {
   }
 };
 
-// Listen for messages from popup.js
+// Listen for messages from popup.js and content scripts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('Background script received message:', request.name, 'from:', sender);
   
@@ -85,6 +85,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Recording is processing...');
   } else if (request.name === 'recordingStopped') {
     console.log('Recording stopped...');
+  } else if (request.name === 'captureVisibleTab') {
+    // New: handle captureVisibleTab requests
+    chrome.tabs.captureVisibleTab(null, { format: 'png' }, (dataUrl) => {
+      if (chrome.runtime.lastError) {
+        sendResponse({ success: false, error: chrome.runtime.lastError.message });
+      } else {
+        sendResponse({ success: true, dataUrl });
+      }
+    });
+    return true; // Keep message channel open for async response
   }
 });
 

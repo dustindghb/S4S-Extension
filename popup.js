@@ -577,6 +577,363 @@ const analyzeVideo = async () => {
   }
 };
 
+// Function to capture and analyze LinkedIn feed using viewport capture
+// Debug function to test content script connection
+const debugConnection = async () => {
+  try {
+    console.log('Debugging content script connection...');
+    
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    if (!tab) {
+      alert('No active tab found');
+      return;
+    }
+    
+    console.log('Active tab:', tab.url, 'ID:', tab.id);
+    
+    // Test ping
+    try {
+      const pingResponse = await chrome.tabs.sendMessage(tab.id, { name: 'ping' });
+      console.log('Ping response:', pingResponse);
+      alert(`Content script is working! Response: ${JSON.stringify(pingResponse)}`);
+    } catch (pingError) {
+      console.error('Ping failed:', pingError);
+      
+      // Try injection
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content.js', 'auto_scroll.js', 'viewport_capture.js']
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const pingResponse2 = await chrome.tabs.sendMessage(tab.id, { name: 'ping' });
+        console.log('Ping after injection:', pingResponse2);
+        alert(`Content script injected successfully! Response: ${JSON.stringify(pingResponse2)}`);
+      } catch (injectionError) {
+        console.error('Injection failed:', injectionError);
+        alert(`Injection failed: ${injectionError.message}`);
+      }
+    }
+  } catch (error) {
+    console.error('Debug error:', error);
+    alert(`Debug error: ${error.message}`);
+  }
+};
+
+// Function to export current viewport for debugging
+const exportCurrentViewport = async () => {
+  try {
+    console.log('Exporting current viewport...');
+    
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    if (!tab) {
+      alert('No active tab found');
+      return;
+    }
+    
+    // Send message to content script to export current viewport
+    const response = await chrome.tabs.sendMessage(tab.id, { 
+      name: 'exportCurrentViewport' 
+    });
+    
+    if (response && response.success) {
+      alert('Viewport exported successfully! Check your downloads.');
+    } else {
+      alert('Failed to export viewport: ' + (response?.error || 'Unknown error'));
+    }
+    
+  } catch (error) {
+    console.error('Export error:', error);
+    alert(`Export error: ${error.message}`);
+  }
+};
+
+// Function to test html2canvas functionality
+const testHtml2Canvas = async () => {
+  try {
+    console.log('Testing html2canvas...');
+    
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    if (!tab) {
+      alert('No active tab found');
+      return;
+    }
+    
+    // Send message to content script to test html2canvas
+    const response = await chrome.tabs.sendMessage(tab.id, { 
+      name: 'testHtml2Canvas' 
+    });
+    
+    if (response && response.success) {
+      alert('html2canvas test successful! Check console for details.');
+    } else {
+      alert('html2canvas test failed: ' + (response?.error || 'Unknown error'));
+    }
+    
+  } catch (error) {
+    console.error('Test error:', error);
+    alert(`Test error: ${error.message}`);
+  }
+};
+
+// Function to debug capture functionality
+const debugCapture = async () => {
+  try {
+    console.log('Debugging capture...');
+    
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    if (!tab) {
+      alert('No active tab found');
+      return;
+    }
+    
+    // Send message to content script to debug capture
+    const response = await chrome.tabs.sendMessage(tab.id, { 
+      name: 'debugCapture' 
+    });
+    
+    if (response && response.success) {
+      alert(`Debug capture successful!\nCanvas: ${response.canvasWidth}x${response.canvasHeight}\nData URL length: ${response.dataUrlLength}`);
+    } else {
+      alert('Debug capture failed: ' + (response?.error || 'Unknown error'));
+    }
+    
+  } catch (error) {
+    console.error('Debug error:', error);
+    alert(`Debug error: ${error.message}`);
+  }
+};
+
+const testViewportScrollCapture = async () => {
+  try {
+    console.log('=== Test Viewport Scroll Capture ===');
+    
+    // Get current tab
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab) {
+      console.error('No active tab found');
+      return;
+    }
+    
+    // Check if we're on LinkedIn
+    if (!tab.url.includes('linkedin.com')) {
+      alert('Please navigate to LinkedIn to use this feature');
+      return;
+    }
+    
+    console.log('Sending testViewportScrollCapture message to content script...');
+    
+    // First, test if content script is loaded with a ping
+    let contentScriptLoaded = false;
+    try {
+      const pingResponse = await chrome.tabs.sendMessage(tab.id, { name: 'ping' });
+      if (pingResponse && pingResponse.success) {
+        console.log('Content script is loaded and responding');
+        contentScriptLoaded = true;
+      }
+    } catch (pingError) {
+      console.log('Content script not responding to ping, will attempt injection');
+    }
+    
+    // Try to send message to content script with better error handling
+    let response;
+    try {
+      if (!contentScriptLoaded) {
+        // Try to inject the content script manually
+        console.log('Attempting to inject content script manually...');
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['html2canvas.min.js', 'linkedin_selectors.js', 'viewport_capture.js', 'auto_scroll.js', 'content.js']
+          });
+          
+          // Wait a moment for scripts to load
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Test ping again
+          const pingResponse2 = await chrome.tabs.sendMessage(tab.id, { name: 'ping' });
+          if (!pingResponse2 || !pingResponse2.success) {
+            throw new Error('Content script injection failed');
+          }
+          console.log('Content script successfully injected and responding');
+        } catch (injectionError) {
+          console.error('Content script injection failed:', injectionError);
+          throw new Error('Could not load the extension on this page. Please refresh the page and try again.');
+        }
+      }
+      
+      // Now send the actual test message
+      response = await chrome.tabs.sendMessage(tab.id, { 
+        action: 'testViewportScrollCapture' 
+      });
+    } catch (messageError) {
+      console.error('Message sending failed:', messageError);
+      throw new Error('Could not communicate with the page. Please refresh the page and try again.');
+    }
+    
+    console.log('Test viewport scroll capture response:', response);
+    
+    if (response && response.success) {
+      alert(`✅ Viewport scroll capture test successful!\n\nResult: ${response.width}x${response.height} pixels\n\nCheck your downloads for the exported images.`);
+    } else {
+      alert('❌ Viewport scroll capture test failed: ' + (response?.error || 'Unknown error'));
+    }
+    
+  } catch (error) {
+    console.error('Error in testViewportScrollCapture:', error);
+    alert('Test viewport scroll capture error: ' + error.message);
+  }
+};
+
+const testSingleViewport = async () => {
+  try {
+    console.log('=== Test Single Viewport ===');
+    
+    // Get current tab
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab) {
+      console.error('No active tab found');
+      return;
+    }
+    
+    console.log('Sending testSingleViewport message to content script...');
+    
+    // Send message to content script
+    const response = await chrome.tabs.sendMessage(tab.id, { 
+      action: 'testSingleViewport' 
+    });
+    
+    console.log('Test single viewport response:', response);
+    
+    if (response && response.success) {
+      alert(`✅ Single viewport test successful!\n\nCanvas: ${response.width}x${response.height} pixels\n\nCheck your downloads for the exported image.`);
+    } else {
+      alert('❌ Single viewport test failed: ' + (response?.error || 'Unknown error'));
+    }
+    
+  } catch (error) {
+    console.error('Error in testSingleViewport:', error);
+    alert('Test single viewport error: ' + error.message);
+  }
+};
+
+const captureLinkedInFeed = async () => {
+  try {
+    console.log('Starting LinkedIn feed capture...');
+    
+    // Get API key from environment
+    let apiKey = '';
+    if (window.envLoader && window.envLoader.isLoaded()) {
+      apiKey = window.envLoader.getOpenAIKey();
+    }
+    
+    if (!apiKey) {
+      alert('Please add your OpenAI API key to the config.env file');
+      return;
+    }
+    
+    // Update button state
+    const captureButton = document.getElementById('captureFeedButton');
+    if (captureButton) captureButton.disabled = true;
+    captureButton.textContent = '📸 Capturing...';
+    
+    // Get the active tab
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    if (!tab) {
+      throw new Error('No active tab found');
+    }
+    
+    // Check if we're on LinkedIn
+    if (!tab.url.includes('linkedin.com')) {
+      alert('Please navigate to LinkedIn to use this feature');
+      return;
+    }
+    
+    console.log('Sending message to content script on tab:', tab.id);
+    
+    // First, test if content script is loaded with a ping
+    let contentScriptLoaded = false;
+    try {
+      const pingResponse = await chrome.tabs.sendMessage(tab.id, { name: 'ping' });
+      if (pingResponse && pingResponse.success) {
+        console.log('Content script is loaded and responding');
+        contentScriptLoaded = true;
+      }
+    } catch (pingError) {
+      console.log('Content script not responding to ping, will attempt injection');
+    }
+    
+    // Try to send message to content script with better error handling
+    let response;
+    try {
+      if (!contentScriptLoaded) {
+        // Try to inject the content script manually
+        console.log('Attempting to inject content script manually...');
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['html2canvas.min.js', 'linkedin_selectors.js', 'viewport_capture.js', 'auto_scroll.js', 'content.js']
+          });
+          
+          // Wait a moment for scripts to load
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Test ping again
+          const pingResponse2 = await chrome.tabs.sendMessage(tab.id, { name: 'ping' });
+          if (!pingResponse2 || !pingResponse2.success) {
+            throw new Error('Content script injection failed');
+          }
+          console.log('Content script successfully injected and responding');
+        } catch (injectionError) {
+          console.error('Content script injection failed:', injectionError);
+          throw new Error('Could not load the extension on this page. Please refresh the page and try again.');
+        }
+      }
+      
+      // Now send the actual capture message
+      response = await chrome.tabs.sendMessage(tab.id, {
+        name: 'captureLinkedInFeed',
+        apiKey: apiKey
+      });
+    } catch (messageError) {
+      console.error('Message sending failed:', messageError);
+      throw new Error('Could not communicate with the page. Please refresh the page and try again.');
+    }
+    
+    if (response && response.success) {
+      // Show analysis results
+      const analysisData = {
+        timestamp: new Date().toISOString(),
+        filename: 'linkedin-feed-capture',
+        frameCount: 1,
+        analysis: response.analysis
+      };
+      
+      await chrome.storage.local.set({ lastAnalysis: analysisData });
+      showAnalysisModal(analysisData);
+      
+    } else {
+      throw new Error(response?.error || 'Capture failed');
+    }
+    
+  } catch (error) {
+    console.error('Error capturing LinkedIn feed:', error);
+    alert(`Error capturing LinkedIn feed: ${error.message}`);
+  } finally {
+    // Reset button state
+    const captureButton = document.getElementById('captureFeedButton');
+    if (captureButton) captureButton.disabled = false;
+    captureButton.textContent = '📸 Capture & Analyze Feed';
+  }
+};
+
 // Function to open options page
 const openOptions = () => {
   chrome.runtime.openOptionsPage();
@@ -823,12 +1180,108 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 
 document.addEventListener('DOMContentLoaded', () => {
   // Set up event listeners
-  document.getElementById('startRecordingButton').addEventListener('click', startRecording);
-  document.getElementById('stopRecordingButton').addEventListener('click', stopRecording);
-  document.getElementById('videoFile').addEventListener('change', handleFileSelect);
-  document.getElementById('analyzeButton').addEventListener('click', analyzeVideo);
-  document.getElementById('optionsButton').addEventListener('click', openOptions);
-  document.getElementById('analysisButton').addEventListener('click', viewLastAnalysis);
+  const startRecordingButton = document.getElementById('startRecordingButton');
+  if (startRecordingButton) startRecordingButton.addEventListener('click', startRecording);
+  
+  const stopRecordingButton = document.getElementById('stopRecordingButton');
+  if (stopRecordingButton) stopRecordingButton.addEventListener('click', stopRecording);
+  
+  const videoFileInput = document.getElementById('videoFile');
+  if (videoFileInput) videoFileInput.addEventListener('change', handleFileSelect);
+  
+  const analyzeButton = document.getElementById('analyzeButton');
+  if (analyzeButton) analyzeButton.addEventListener('click', analyzeVideo);
+  
+  const optionsButton = document.getElementById('optionsButton');
+  if (optionsButton) optionsButton.addEventListener('click', openOptions);
+  
+  const analysisButton = document.getElementById('analysisButton');
+  if (analysisButton) analysisButton.addEventListener('click', viewLastAnalysis);
+  
+  const captureFeedButton = document.getElementById('captureFeedButton');
+  if (captureFeedButton) captureFeedButton.addEventListener('click', captureLinkedInFeed);
+  
+  const testViewportScrollButton = document.getElementById('testViewportScrollButton');
+  if (testViewportScrollButton) testViewportScrollButton.addEventListener('click', testViewportScrollCapture);
+  
+  const stopViewportScrollButton = document.getElementById('stopViewportScrollButton');
+  if (stopViewportScrollButton) stopViewportScrollButton.addEventListener('click', async () => {
+    await chrome.storage.local.set({ viewportCaptureStop: true });
+    alert('Capture will stop after the current scroll.');
+  });
+  
+  // Add debug buttons for testing (temporary)
+  const debugButton = document.createElement('button');
+  debugButton.textContent = '🐛 Debug Connection';
+  debugButton.style.cssText = `
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 1000;
+  `;
+  debugButton.onclick = debugConnection;
+  document.body.appendChild(debugButton);
+  
+  const exportButton = document.createElement('button');
+  exportButton.textContent = '📸 Export Viewport';
+  exportButton.style.cssText = `
+    position: fixed;
+    top: 40px;
+    right: 10px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 1000;
+  `;
+  exportButton.onclick = exportCurrentViewport;
+  document.body.appendChild(exportButton);
+  
+  const testButton = document.createElement('button');
+  testButton.textContent = '🧪 Test html2canvas';
+  testButton.style.cssText = `
+    position: fixed;
+    top: 70px;
+    right: 10px;
+    background: #FF9800;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 1000;
+  `;
+  testButton.onclick = testHtml2Canvas;
+  document.body.appendChild(testButton);
+  
+  const debugCaptureButton = document.createElement('button');
+  debugCaptureButton.textContent = '🔍 Debug Capture';
+  debugCaptureButton.style.cssText = `
+    position: fixed;
+    top: 100px;
+    right: 10px;
+    background: #9C27B0;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 1000;
+  `;
+  debugCaptureButton.onclick = debugCapture;
+  document.body.appendChild(debugCaptureButton);
   
   // Initialize UI
   checkRecordingState();

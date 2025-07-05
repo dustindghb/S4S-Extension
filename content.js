@@ -1,4 +1,18 @@
 // Enhanced content.js - Improved analysis display with better UI and formatting
+console.log('S4S Tool content script loaded successfully');
+
+// Test html2canvas availability
+if (typeof html2canvas !== 'undefined') {
+  console.log('✅ html2canvas is available in content script');
+  console.log('html2canvas version:', html2canvas.version || 'unknown');
+} else {
+  console.log('❌ html2canvas is NOT available in content script');
+  console.log('Available global objects:', Object.keys(window).filter(key => key.includes('html') || key.includes('canvas')));
+}
+
+// Test message handling
+console.log('Content script loaded and ready to receive messages');
+console.log('Available message handlers:', ['ping', 'captureLinkedInFeed', 'exportCurrentViewport', 'testHtml2Canvas']);
 
 const createNotification = (title, message, type = 'info', duration = 5000) => {
   // Remove any existing notifications
@@ -124,10 +138,19 @@ const createNotification = (title, message, type = 'info', duration = 5000) => {
 
 const displayAnalysisResult = (data) => {
   if (data.hasAnalysis && data.analysis) {
+    // Create quality info message
+    let qualityMessage = `Processed ${data.frameCount} frames with detailed insights ready to view.`;
+    if (data.qualityInfo) {
+      qualityMessage += `\nImage Quality: ${data.qualityInfo.quality} (${data.qualityInfo.width}x${data.qualityInfo.height})`;
+      if (data.qualityInfo.quality === 'Poor') {
+        qualityMessage += '\n⚠️ Image quality is poor - content may not be clearly visible';
+      }
+    }
+    
     // Create an enhanced notification for successful analysis
     const notification = createNotification(
       '🎯 AI Analysis Complete',
-      `Processed ${data.frameCount} frames with detailed insights ready to view.`,
+      qualityMessage,
       'success',
       0 // Don't auto-hide
     );
@@ -580,6 +603,82 @@ const showEnhancedAnalysisModal = (analysis, frameCount) => {
   document.body.appendChild(modal);
 };
 
+// Handle LinkedIn feed capture using viewport capture
+const handleLinkedInFeedCapture = async (apiKey) => {
+  try {
+    console.log('Starting LinkedIn feed capture from content script...');
+    
+    // Check if ViewportCapture is available
+    if (typeof window.ViewportCapture === 'undefined') {
+      throw new Error('ViewportCapture not loaded');
+    }
+    
+    // Create viewport capture instance
+    const viewportCapture = new window.ViewportCapture();
+    
+    // Show progress notification
+    createNotification(
+      '📸 Capturing LinkedIn Feed',
+      'Capturing multiple viewports and stitching them together...',
+      'info',
+      0 // Don't auto-hide
+    );
+    
+    // Capture and analyze the feed
+    const result = await viewportCapture.captureAndAnalyzeFeed(apiKey);
+    
+    // Remove progress notification
+    const progressNotification = document.getElementById('screen-recorder-notification');
+    if (progressNotification) {
+      progressNotification.remove();
+    }
+    
+    // Show success notification
+    createNotification(
+      '✅ Feed Analysis Complete',
+      'Successfully captured and analyzed LinkedIn feed',
+      'success',
+      4000
+    );
+    
+    // Display the analysis results
+    displayAnalysisResult({
+      hasAnalysis: true,
+      analysis: result.analysis,
+      frameCount: 1,
+      filename: 'linkedin-feed-capture',
+      qualityInfo: result.qualityInfo
+    });
+    
+    return {
+      success: true,
+      analysis: result.analysis
+    };
+    
+  } catch (error) {
+    console.error('Error in LinkedIn feed capture:', error);
+    
+    // Remove progress notification
+    const progressNotification = document.getElementById('screen-recorder-notification');
+    if (progressNotification) {
+      progressNotification.remove();
+    }
+    
+    // Show error notification
+    createNotification(
+      '❌ Capture Failed',
+      `Error: ${error.message}`,
+      'error',
+      5000
+    );
+    
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
 const formatAnalysisText = (text) => {
   // Enhanced text formatting for better readability
   let formatted = text;
@@ -609,6 +708,8 @@ const formatAnalysisText = (text) => {
 
 // Listen for messages from the recording script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('Content script received message:', message.name);
+  
   if (message.name === 'endedRecording') {
     console.log('Recording ended, received data:', message.body);
     
@@ -626,7 +727,265 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     
     sendResponse({ received: true });
+  } else if (message.name === 'captureLinkedInFeed') {
+    console.log('Handling LinkedIn feed capture request...');
+    handleLinkedInFeedCapture(message.apiKey).then(sendResponse).catch(error => {
+      console.error('LinkedIn feed capture error:', error);
+      sendResponse({ success: false, error: error.message });
+    });
+    return true; // Keep message channel open for async response
+  } else if (message.name === 'ping') {
+    // Simple ping to test if content script is loaded
+    console.log('Content script ping received');
+    sendResponse({ success: true, message: 'Content script is loaded' });
+  } else if (message.name === 'exportCurrentViewport') {
+    // Export current viewport for debugging
+    console.log('Exporting current viewport...');
+    handleExportCurrentViewport().then(sendResponse).catch(error => {
+      console.error('Export viewport error:', error);
+      sendResponse({ success: false, error: error.message });
+    });
+    return true; // Keep message channel open for async response
+  } else if (message.name === 'testHtml2Canvas') {
+    // Test html2canvas functionality
+    console.log('Testing html2canvas...');
+    handleTestHtml2Canvas().then(sendResponse).catch(error => {
+      console.error('Test html2canvas error:', error);
+      sendResponse({ success: false, error: error.message });
+    });
+    return true; // Keep message channel open for async response
+  } else if (message.name === 'debugCapture') {
+    // Debug capture functionality
+    console.log('Debug capture requested...');
+    handleDebugCapture().then(sendResponse).catch(error => {
+      console.error('Debug capture error:', error);
+      sendResponse({ success: false, error: error.message });
+    });
+    return true; // Keep message channel open for async response
+  } else if (message.action === 'testViewportScrollCapture') {
+    // Test viewport scroll capture functionality
+    console.log('Test viewport scroll capture requested...');
+    handleTestViewportScrollCapture().then(sendResponse).catch(error => {
+      console.error('Test viewport scroll capture error:', error);
+      sendResponse({ success: false, error: error.message });
+    });
+    return true; // Keep message channel open for async response
+  } else if (message.action === 'testSingleViewport') {
+    // Test single viewport capture functionality
+    console.log('Test single viewport requested...');
+    handleTestSingleViewport().then(sendResponse).catch(error => {
+      console.error('Test single viewport error:', error);
+      sendResponse({ success: false, error: error.message });
+    });
+    return true; // Keep message channel open for async response
   }
   
   return true; // Keep message channel open
 });
+
+// Handle export current viewport for debugging
+const handleExportCurrentViewport = async () => {
+  try {
+    console.log('Starting current viewport export...');
+    
+    // Check if ViewportCapture is available
+    if (typeof window.ViewportCapture === 'undefined') {
+      throw new Error('ViewportCapture not loaded');
+    }
+    
+    // Create viewport capture instance
+    const viewportCapture = new window.ViewportCapture();
+    
+    // Capture current viewport
+    const screenshot = await viewportCapture.captureVisibleArea();
+    
+    // Export the image
+    await viewportCapture.exportImage(screenshot, 'current-viewport');
+    
+    return {
+      success: true,
+      message: 'Current viewport exported successfully'
+    };
+    
+  } catch (error) {
+    console.error('Error in current viewport export:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+// Handle test html2canvas functionality
+const handleTestHtml2Canvas = async () => {
+  try {
+    console.log('Starting html2canvas test...');
+    
+    // Check if ViewportCapture is available
+    if (typeof window.ViewportCapture === 'undefined') {
+      throw new Error('ViewportCapture not loaded');
+    }
+    
+    // Create viewport capture instance
+    const viewportCapture = new window.ViewportCapture();
+    
+    // Test html2canvas
+    const testResult = await viewportCapture.testHtml2Canvas();
+    
+    if (testResult) {
+      return {
+        success: true,
+        message: 'html2canvas test successful'
+      };
+    } else {
+      return {
+        success: false,
+        error: 'html2canvas test failed'
+      };
+    }
+    
+  } catch (error) {
+    console.error('Error in html2canvas test:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+// Handle debug capture functionality
+const handleDebugCapture = async () => {
+  try {
+    console.log('=== Debug Capture Test ===');
+    
+    // Check if html2canvas is available
+    if (typeof html2canvas === 'undefined') {
+      return {
+        success: false,
+        error: 'html2canvas not available'
+      };
+    }
+    
+    console.log('html2canvas available, attempting capture with viewport dimensions...');
+    
+    // Get viewport dimensions
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    console.log('Using viewport dimensions:', viewportWidth, 'x', viewportHeight);
+    
+    // Try a capture with proper viewport dimensions
+    const canvas = await html2canvas(document.body, {
+      width: viewportWidth,
+      height: viewportHeight,
+      scrollX: window.pageXOffset,
+      scrollY: window.pageYOffset,
+      backgroundColor: '#ffffff',
+      scale: 1,
+      logging: true,
+      useCORS: true,
+      allowTaint: true
+    });
+    
+    console.log('Debug capture successful, canvas size:', canvas.width, 'x', canvas.height);
+    
+    // Convert to base64 for testing
+    const dataUrl = canvas.toDataURL('image/png');
+    console.log('Canvas data URL length:', dataUrl.length);
+    
+    return {
+      success: true,
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      dataUrlLength: dataUrl.length
+    };
+    
+  } catch (error) {
+    console.error('Debug capture failed:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+// Handle test viewport scroll capture functionality
+const handleTestViewportScrollCapture = async () => {
+  try {
+    console.log('=== Test Viewport Scroll Capture ===');
+    
+    // Check if ViewportCapture is available
+    if (typeof window.ViewportCapture === 'undefined') {
+      throw new Error('ViewportCapture not loaded');
+    }
+    
+    // Create viewport capture instance
+    const viewportCapture = new window.ViewportCapture();
+    
+    // Test the new viewport scroll capture method
+    const testResult = await viewportCapture.testViewportScrollCapture();
+    
+    if (testResult && testResult.success) {
+      return {
+        success: true,
+        width: testResult.width,
+        height: testResult.height,
+        message: 'Viewport scroll capture test successful'
+      };
+    } else {
+      return {
+        success: false,
+        error: testResult?.error || 'Viewport scroll capture test failed'
+      };
+    }
+    
+  } catch (error) {
+    console.error('Error in viewport scroll capture test:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+// Handle test single viewport functionality
+const handleTestSingleViewport = async () => {
+  try {
+    console.log('=== Test Single Viewport ===');
+    
+    // Check if ViewportCapture is available
+    if (typeof window.ViewportCapture === 'undefined') {
+      throw new Error('ViewportCapture not loaded');
+    }
+    
+    // Create viewport capture instance
+    const viewportCapture = new window.ViewportCapture();
+    
+    // Test single viewport capture
+    const canvas = await viewportCapture.captureCurrentViewport();
+    
+    if (canvas) {
+      // Export the single viewport for debugging
+      await viewportCapture.exportImage(canvas, 'single-viewport-test');
+      
+      return {
+        success: true,
+        width: canvas.width,
+        height: canvas.height,
+        message: 'Single viewport capture successful'
+      };
+    } else {
+      return {
+        success: false,
+        error: 'Single viewport capture failed - no canvas returned'
+      };
+    }
+    
+  } catch (error) {
+    console.error('Error in single viewport test:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
